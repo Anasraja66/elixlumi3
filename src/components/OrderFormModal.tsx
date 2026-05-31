@@ -82,6 +82,12 @@ const OrderFormModal = ({ isOpen, onClose, selectedProduct }: OrderFormModalProp
     setIsSubmitting(true);
 
     try {
+      // Calculate total for payload and WhatsApp message
+      const priceValue = selectedProduct
+        ? parseFloat(selectedProduct.price.replace(/[^0-9.]/g, ""))
+        : 0;
+      const totalAmount = priceValue * formData.quantity;
+
       const payload = {
         name: formData.name,
         phone: formData.phone,
@@ -91,6 +97,7 @@ const OrderFormModal = ({ isOpen, onClose, selectedProduct }: OrderFormModalProp
         quantity: formData.quantity,
         notes: formData.notes || undefined,
         formType: formType,
+        totalAmount: totalAmount,
         product: selectedProduct ? {
           name: selectedProduct.name,
           price: selectedProduct.price,
@@ -112,12 +119,6 @@ const OrderFormModal = ({ isOpen, onClose, selectedProduct }: OrderFormModalProp
       }
 
       setIsSuccess(true);
-
-      // Calculate total for WhatsApp message
-      const priceValue = selectedProduct
-        ? parseFloat(selectedProduct.price.replace(/[^0-9.]/g, ""))
-        : 0;
-      const totalAmount = priceValue * formData.quantity;
 
       // Send to WhatsApp as well
       const whatsappMessage = encodeURIComponent(
