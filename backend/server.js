@@ -6,6 +6,8 @@ import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import multer from "multer";
 import db from "./db.js";
+import fs from "node:fs";
+import nodemailer from "nodemailer";
 
 const app = express();
 const port = process.env.PORT || 3000;
@@ -16,7 +18,11 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const rootDir = path.resolve(__dirname, "..");
 const distDir = path.resolve(rootDir, "dist");
-const uploadsDir = path.resolve(rootDir, "uploads");
+
+// Resolve uploads directory: serve from public_html/uploads in Hostinger/Production, and fallback to root uploads locally
+const publicHtmlUploadsDir = path.resolve(rootDir, "public_html", "uploads");
+const defaultUploadsDir = path.resolve(rootDir, "uploads");
+const uploadsDir = fs.existsSync(path.resolve(rootDir, "public_html")) ? publicHtmlUploadsDir : defaultUploadsDir;
 
 console.log("------------------------------------------");
 console.log("🚀 Server Initialization Debug Info:");
@@ -29,12 +35,32 @@ console.log("📦 env.PORT:", process.env.PORT);
 console.log("------------------------------------------");
 
 // Ensure uploads directory exists with correct permissions
-import fs from "node:fs";
 if (!fs.existsSync(uploadsDir)) {
     console.log("⚠️ Creating uploads directory at:", uploadsDir);
     fs.mkdirSync(uploadsDir, { recursive: true });
 } else {
-    console.log("✅ Uploads directory exists.");
+    console.log("✅ Uploads directory exists at:", uploadsDir);
+}
+
+// Migrate files from defaultUploadsDir to publicHtmlUploadsDir if needed (for Hostinger production backward compatibility)
+if (uploadsDir === publicHtmlUploadsDir && fs.existsSync(defaultUploadsDir)) {
+    try {
+        const files = fs.readdirSync(defaultUploadsDir);
+        if (files.length > 0) {
+            console.log(`📂 Found ${files.length} files in old root uploads directory. Migrating to public_html/uploads...`);
+            for (const file of files) {
+                const oldPath = path.join(defaultUploadsDir, file);
+                const newPath = path.join(publicHtmlUploadsDir, file);
+                if (fs.statSync(oldPath).isFile()) {
+                    fs.copyFileSync(oldPath, newPath);
+                    console.log(`Migrated: ${file}`);
+                }
+            }
+            console.log("✅ Uploads directory migration completed successfully!");
+        }
+    } catch (migrationErr) {
+        console.error("❌ Error migrating uploaded files:", migrationErr.message);
+    }
 }
 
 // Create default admin if not exists
@@ -222,7 +248,200 @@ app.delete("/api/admin/products/:id", verifyToken, async (req, res) => {
     } catch (err) {
         res.status(500).json({ error: err.message });
     }
-});
+});// --- EMAIL NOTIFICATION DISPATCHER ---
+async function sendOrderNotificationEmail(order) {
+    const recipientEmail = "rafihabbas0@gmail.com";
+    const resendApiKey = process.env.RESEND_API_KEY;
+    const fromEmail = process.env.ORDER_EMAIL_FROM || "Elixlumi Orders <onboarding@resend.dev>";
+    
+    const subject = `Elix Lumi: New ${order.formType === 'inquiry' ? 'Inquiry' : 'Order'} #${order.orderNumber}`;
+    
+    // Format product details
+    const productsHtml = order.product ? `
+        <div style="background-color: #1a1a1a; border: 1px solid #c5a880; padding: 15px; margin-top: 15px; border-radius: 4px;">
+            <h3 style="color: #c5a880; margin-top: 0; font-family: 'Playfair Display', Georgia, serif; font-size: 18px;">Product Details</h3>
+            <table style="width: 100%; border-collapse: collapse;">
+                <tr>
+                    <td style="color: #888; font-size: 13px; padding: 5px 0;">Fragrance Name</td>
+                    <td style="color: #fff; font-size: 14px; font-weight: bold; text-align: right; padding: 5px 0;">${order.product.name}</td>
+                </tr>
+                <tr>
+                    <td style="color: #888; font-size: 13px; padding: 5px 0;">Bottle Size</td>
+                    <td style="color: #fff; font-size: 14px; text-align: right; padding: 5px 0;">${order.product.size}</td>
+                </tr>
+                <tr>
+                    <td style="color: #888; font-size: 13px; padding: 5px 0;">Price</td>
+                    <td style="color: #fff; font-size: 14px; text-align: right; padding: 5px 0;">${order.product.price}</td>
+                </tr>
+                ${order.quantity ? `
+                <tr>
+                    <td style="color: #888; font-size: 13px; padding: 5px 0;">Quantity</td>
+                    <td style="color: #fff; font-size: 14px; text-align: right; padding: 5px 0;">${order.quantity}x</td>
+                </tr>` : ''}
+                ${order.totalAmount ? `
+                <tr style="border-top: 1px solid #333;">
+                    <td style="color: #c5a880; font-size: 15px; font-weight: bold; padding: 10px 0 0 0;">Total Amount</td>
+                    <td style="color: #c5a880; font-size: 18px; font-weight: bold; text-align: right; padding: 10px 0 0 0;">PKR ${order.totalAmount.toLocaleString()}</td>
+                </tr>` : ''}
+            </table>
+        </div>
+    ` : '<p style="color: #888;">No product specified</p>';
+
+    // Format click-to-chat WhatsApp link
+    // Strip anything except digits from the phone number
+    const cleanPhone = order.phone.replace(/[^0-9]/g, "");
+    const formattedPhone = cleanPhone.startsWith("0") ? "92" + cleanPhone.slice(1) : cleanPhone;
+    const whatsappMsg = encodeURIComponent(`Hi ${order.name}, thank you for contacting Elix Lumi! We received your ${order.formType === 'inquiry' ? 'inquiry' : 'order'} for ${order.product?.name || 'our perfume'}. We'd love to proceed with the confirmation.`);
+    const whatsappLink = `https://wa.me/${formattedPhone}?text=${whatsappMsg}`;
+
+    const htmlContent = `
+    <!DOCTYPE html>
+    <html>
+    <head>
+        <meta charset="utf-8">
+        <title>Elix Lumi Notification</title>
+    </head>
+    <body style="background-color: #0b0b0b; color: #ffffff; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; margin: 0; padding: 40px 20px;">
+        <div style="max-width: 600px; margin: 0 auto; background-color: #111111; border: 1px solid #222222; border-radius: 8px; overflow: hidden; box-shadow: 0 4px 20px rgba(0,0,0,0.8);">
+            <!-- Header -->
+            <div style="background-color: #0b0b0b; padding: 30px; text-align: center; border-bottom: 1px solid #222222;">
+                <h1 style="color: #ffffff; margin: 0; font-family: 'Playfair Display', Georgia, serif; font-size: 28px; letter-spacing: 4px; text-transform: uppercase;">ELIX LUMI</h1>
+                <p style="color: #c5a880; margin: 5px 0 0 0; font-size: 11px; letter-spacing: 2px; text-transform: uppercase;">Luxury Perfumes</p>
+            </div>
+            
+            <!-- Body -->
+            <div style="padding: 30px 40px;">
+                <h2 style="color: #c5a880; font-family: 'Playfair Display', Georgia, serif; font-size: 20px; font-weight: normal; margin-top: 0; border-bottom: 1px solid #222222; padding-bottom: 10px;">
+                    New ${order.formType === 'inquiry' ? 'Inquiry Received' : 'Order Placed'}
+                </h2>
+                
+                <p style="font-size: 14px; color: #cccccc; line-height: 1.6;">
+                    A new customer request has been captured on your website. Here are the submission details:
+                </p>
+                
+                <!-- Customer Details -->
+                <div style="margin-top: 25px;">
+                    <h3 style="color: #c5a880; font-family: 'Playfair Display', Georgia, serif; font-size: 16px; margin-bottom: 10px; border-bottom: 1px solid #333; padding-bottom: 5px;">Customer Details</h3>
+                    <table style="width: 100%; border-collapse: collapse; font-size: 14px; line-height: 1.6;">
+                        <tr>
+                            <td style="color: #888; width: 120px; padding: 4px 0;">Name:</td>
+                            <td style="color: #fff; font-weight: bold; padding: 4px 0;">${order.name}</td>
+                        </tr>
+                        <tr>
+                            <td style="color: #888; padding: 4px 0;">Phone:</td>
+                            <td style="color: #fff; padding: 4px 0;"><a href="tel:${order.phone}" style="color: #c5a880; text-decoration: none;">${order.phone}</a></td>
+                        </tr>
+                        ${order.email ? `
+                        <tr>
+                            <td style="color: #888; padding: 4px 0;">Email:</td>
+                            <td style="color: #fff; padding: 4px 0;"><a href="mailto:${order.email}" style="color: #c5a880; text-decoration: none;">${order.email}</a></td>
+                        </tr>` : ''}
+                        ${order.city ? `
+                        <tr>
+                            <td style="color: #888; padding: 4px 0;">City:</td>
+                            <td style="color: #fff; padding: 4px 0;">${order.city}</td>
+                        </tr>` : ''}
+                        ${order.address ? `
+                        <tr>
+                            <td style="color: #888; padding: 4px 0;">Address:</td>
+                            <td style="color: #fff; padding: 4px 0;">${order.address}</td>
+                        </tr>` : ''}
+                    </table>
+                </div>
+                
+                <!-- Product Details -->
+                ${productsHtml}
+                
+                <!-- Customer Notes -->
+                ${order.notes ? `
+                <div style="margin-top: 25px; background-color: #151515; padding: 15px; border-left: 3px solid #c5a880; border-radius: 4px;">
+                    <h4 style="color: #c5a880; margin: 0 0 5px 0; font-size: 13px;">Customer Notes:</h4>
+                    <p style="color: #bbb; font-size: 13px; margin: 0; line-height: 1.5; font-style: italic;">"${order.notes}"</p>
+                </div>
+                ` : ''}
+                
+                <!-- Action Button -->
+                <div style="margin-top: 35px; text-align: center;">
+                    <a href="${whatsappLink}" target="_blank" style="background-color: #25d366; color: #ffffff; text-decoration: none; padding: 15px 30px; font-size: 14px; font-weight: bold; border-radius: 50px; display: inline-block; box-shadow: 0 4px 10px rgba(37,211,102,0.3); transition: transform 0.2s;">
+                        Contact Customer via WhatsApp
+                    </a>
+                    <p style="color: #666; font-size: 11px; margin-top: 8px;">Click to instantly open a chat with ${order.name} on WhatsApp</p>
+                </div>
+            </div>
+            
+            <!-- Footer -->
+            <div style="background-color: #0d0d0d; padding: 20px; text-align: center; border-top: 1px solid #222222;">
+                <p style="color: #555; margin: 0; font-size: 11px;">&copy; 2026 Elix Lumi. All rights reserved.</p>
+                <p style="color: #444; margin: 5px 0 0 0; font-size: 10px;">This is an automated notification from your website store dashboard.</p>
+            </div>
+        </div>
+    </body>
+    </html>
+    `;
+
+    // Attempt 1: Resend API (if configured properly with standard api key)
+    if (resendApiKey && resendApiKey.startsWith("re_")) {
+        console.log(`✉️ Attempting to dispatch email using Resend API to: ${recipientEmail}`);
+        try {
+            const response = await fetch("https://api.resend.com/emails", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    "Authorization": `Bearer ${resendApiKey}`
+                },
+                body: JSON.stringify({
+                    from: fromEmail,
+                    to: [recipientEmail],
+                    subject: subject,
+                    html: htmlContent
+                })
+            });
+            const resData = await response.json();
+            if (response.ok) {
+                console.log("✅ Email sent successfully via Resend. ID:", resData.id);
+                return { success: true, provider: "resend" };
+            } else {
+                console.error("❌ Resend API returned error details:", resData);
+            }
+        } catch (resendErr) {
+            console.error("❌ Failed to send email via Resend API:", resendErr.message);
+        }
+    }
+
+    // Attempt 2: Nodemailer (Local SMTP / Fallback)
+    const smtpHost = process.env.SMTP_HOST;
+    const smtpPort = parseInt(process.env.SMTP_PORT || "587");
+    const smtpUser = process.env.SMTP_USER;
+    const smtpPass = process.env.SMTP_PASS;
+
+    if (smtpHost && smtpUser && smtpPass) {
+        console.log(`✉️ Attempting to dispatch email using custom SMTP (${smtpHost}) to: ${recipientEmail}`);
+        try {
+            const transporter = nodemailer.createTransport({
+                host: smtpHost,
+                port: smtpPort,
+                secure: smtpPort === 465,
+                auth: { user: smtpUser, pass: smtpPass }
+            });
+            await transporter.sendMail({
+                from: smtpUser,
+                to: recipientEmail,
+                subject: subject,
+                html: htmlContent
+            });
+            console.log("✅ Email sent successfully via custom SMTP!");
+            return { success: true, provider: "smtp" };
+        } catch (smtpErr) {
+            console.error("❌ Failed to send email via custom SMTP:", smtpErr.message);
+        }
+    }
+
+    // Final Fallback: Log email details
+    console.warn("⚠️ [EMAIL NOTIFICATION FAILED]: No email provider credentials configured in .env!");
+    console.warn(`📩 Raw Order Notification:\nTo: ${recipientEmail}\nSubject: ${subject}\nCustomer: ${order.name} (${order.phone})\nTotal: PKR ${order.totalAmount || 0}`);
+    console.warn("💡 To resolve this, add 'RESEND_API_KEY=re_...' or SMTP credentials ('SMTP_HOST', 'SMTP_USER', 'SMTP_PASS') to your Hostinger Environment Variables.");
+    return { success: false, error: "No email provider configured" };
+}
 
 // --- ORDERS API ---
 app.post("/api/submit-order", async (req, res) => {
@@ -233,12 +452,29 @@ app.post("/api/submit-order", async (req, res) => {
             "INSERT INTO orders (order_number, customer_name, customer_email, customer_phone, customer_city, customer_address, products, total_amount, notes) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
             [orderNumber, body.name, body.email, body.phone, body.city, body.address, JSON.stringify(body.product ? [body.product] : []), body.totalAmount, body.notes]
         );
+        
+        // Background email dispatch
+        sendOrderNotificationEmail({
+            orderNumber,
+            name: body.name,
+            email: body.email,
+            phone: body.phone,
+            city: body.city,
+            address: body.address,
+            product: body.product,
+            quantity: body.quantity,
+            totalAmount: body.totalAmount,
+            notes: body.notes,
+            formType: body.formType
+        }).catch(emailErr => {
+            console.error("❌ Background email notification failed:", emailErr.message);
+        });
+
         res.json({ success: true, orderNumber });
     } catch (err) {
         res.status(500).json({ error: err.message });
     }
 });
-
 app.put("/api/admin/orders/:id", verifyToken, async (req, res) => {
     const { status } = req.body;
     try {

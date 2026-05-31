@@ -70,6 +70,33 @@ const OlfactoryJourney = () => {
     fetchProducts();
   }, [fetchProducts]);
 
+  // Reset scroll container position when current product changes
+  useEffect(() => {
+    const container = document.getElementById("product-image-carousel");
+    if (container) {
+      container.scrollTo({ left: 0 });
+    }
+  }, [currentIndex]);
+
+  const handleScroll = (e: React.UIEvent<HTMLDivElement>) => {
+    const container = e.currentTarget;
+    const index = Math.round(container.scrollLeft / container.clientWidth);
+    if (selectedProduct && index !== selectedImageIndex && index >= 0 && index < selectedProduct.images.length) {
+      setSelectedImageIndex(index);
+    }
+  };
+
+  const scrollToImage = (index: number) => {
+    setSelectedImageIndex(index);
+    const container = document.getElementById("product-image-carousel");
+    if (container) {
+      container.scrollTo({
+        left: container.clientWidth * index,
+        behavior: "smooth"
+      });
+    }
+  };
+
   const availableProducts = products.filter((p) => p.available);
   const selectedProduct = availableProducts[currentIndex];
 
@@ -124,24 +151,41 @@ const OlfactoryJourney = () => {
               transition={{ duration: 0.8, ease: [0.22, 1, 0.36, 1] }}
               className="grid lg:grid-cols-2 gap-16 lg:gap-32 items-center"
             >
-              {/* Product Image */}
-              <div className="relative aspect-square lg:aspect-[4/5] bg-[#F5F5F3] overflow-hidden group">
-                 <img
-                  src={selectedProduct.images[selectedImageIndex]}
-                  alt={selectedProduct.name}
-                  className="w-full h-full object-contain p-12 transition-transform duration-1000 group-hover:scale-105"
-                />
+              {/* Product Image Carousel */}
+              <div className="relative aspect-square lg:aspect-[4/5] bg-[#F5F5F3] overflow-hidden group rounded-lg">
+                {/* Horizontal Scroll-Snap Swipeable Container */}
+                <div
+                  id="product-image-carousel"
+                  onScroll={handleScroll}
+                  className="w-full h-full flex overflow-x-auto snap-x snap-mandatory scrollbar-none"
+                  style={{ scrollBehavior: 'smooth' }}
+                >
+                  {selectedProduct.images.map((img, i) => (
+                    <div
+                      key={i}
+                      className="w-full h-full flex-shrink-0 snap-center flex items-center justify-center p-12 bg-[#F5F5F3]"
+                    >
+                      <img
+                        src={img}
+                        alt={`${selectedProduct.name} - View ${i + 1}`}
+                        className="w-full h-full object-contain transition-transform duration-1000 group-hover:scale-105"
+                      />
+                    </div>
+                  ))}
+                </div>
                 
-                {/* Image Navigation */}
+                {/* Image Navigation Dots */}
                 {selectedProduct.images.length > 1 && (
-                  <div className="absolute bottom-8 left-1/2 -translate-x-1/2 flex gap-3 z-20">
+                  <div className="absolute bottom-8 left-1/2 -translate-x-1/2 flex gap-3 z-20 bg-background/50 backdrop-blur-md px-4 py-2 rounded-full border border-foreground/5 shadow-sm">
                     {selectedProduct.images.map((_, i) => (
                       <button
                         key={i}
-                        onClick={() => setSelectedImageIndex(i)}
-                        className={`w-2 h-2 rounded-full transition-all ${
-                          selectedImageIndex === i ? "bg-foreground w-6" : "bg-foreground/20"
+                        type="button"
+                        onClick={() => scrollToImage(i)}
+                        className={`w-2.5 h-2.5 rounded-full transition-all duration-300 ${
+                          selectedImageIndex === i ? "bg-foreground w-8" : "bg-foreground/20 hover:bg-foreground/45"
                         }`}
+                        aria-label={`Go to image ${i + 1}`}
                       />
                     ))}
                   </div>

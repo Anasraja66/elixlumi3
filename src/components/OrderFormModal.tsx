@@ -120,23 +120,6 @@ const OrderFormModal = ({ isOpen, onClose, selectedProduct }: OrderFormModalProp
 
       setIsSuccess(true);
 
-      // Send to WhatsApp as well
-      const whatsappMessage = encodeURIComponent(
-        `New ${formType === "inquiry" ? "Inquiry" : "Order"}!\n\n` +
-        `Name: ${formData.name}\n` +
-        `Phone: ${formData.phone}\n` +
-        (formData.email ? `Email: ${formData.email}\n` : "") +
-        (selectedProduct ? `Product: ${selectedProduct.name} (${selectedProduct.size})\n` : "") +
-        (formType === "order" ? `Quantity: ${formData.quantity}\n` : "") +
-        (formData.city ? `City: ${formData.city}\n` : "") +
-        (formData.address ? `Address: ${formData.address}\n` : "") +
-        (formData.notes ? `Notes: ${formData.notes}\n` : "") +
-        (formType === "order" ? `Total: PKR ${totalAmount.toLocaleString()}` : "")
-      );
-
-      // Open WhatsApp in new tab
-      window.open(`https://wa.me/923429003706?text=${whatsappMessage}`, "_blank");
-
       setTimeout(() => {
         setIsSuccess(false);
         onClose();
@@ -149,7 +132,7 @@ const OrderFormModal = ({ isOpen, onClose, selectedProduct }: OrderFormModalProp
           quantity: 1,
           notes: "",
         });
-      }, 2000);
+      }, 2500);
 
     } catch (error) {
       console.error("Order submission error:", error);
@@ -170,7 +153,7 @@ const OrderFormModal = ({ isOpen, onClose, selectedProduct }: OrderFormModalProp
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
-          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-background/80 backdrop-blur-sm"
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-md"
           onClick={onClose}
         >
           <motion.div
@@ -178,24 +161,24 @@ const OrderFormModal = ({ isOpen, onClose, selectedProduct }: OrderFormModalProp
             animate={{ scale: 1, opacity: 1, y: 0 }}
             exit={{ scale: 0.9, opacity: 0, y: 20 }}
             transition={{ type: "spring", damping: 25, stiffness: 200 }}
-            className="relative w-full max-w-lg max-h-[90vh] overflow-y-auto bg-card border border-accent/20 rounded-lg shadow-2xl"
+            className="relative w-full max-w-lg max-h-[90vh] overflow-y-auto bg-background/95 backdrop-blur-2xl border border-accent/20 rounded-2xl shadow-[0_25px_60px_-15px_rgba(0,0,0,0.7)] scrollbar-none"
             onClick={(e) => e.stopPropagation()}
           >
             {/* Header */}
-            <div className="sticky top-0 z-10 flex items-center justify-between p-6 bg-card border-b border-accent/10">
+            <div className="sticky top-0 z-10 flex items-center justify-between p-6 bg-background/90 backdrop-blur-md border-b border-accent/15">
               <div>
-                <h2 className="font-display text-2xl text-foreground">
+                <h2 className="font-display text-2xl text-foreground font-light tracking-wide">
                   {formType === "inquiry" ? "Make an Inquiry" : "Place Your Order"}
                 </h2>
                 {selectedProduct && (
-                  <p className="text-sm text-muted-foreground mt-1">
-                    {selectedProduct.name} - {selectedProduct.price}
+                  <p className="text-xs text-primary font-ui tracking-widest uppercase mt-1">
+                    {selectedProduct.name} — {selectedProduct.price}
                   </p>
                 )}
               </div>
               <button
                 onClick={onClose}
-                className="p-2 text-muted-foreground hover:text-foreground transition-colors"
+                className="p-2 text-muted-foreground hover:text-foreground hover:rotate-90 transition-all duration-300"
               >
                 <X className="w-5 h-5" />
               </button>
@@ -203,39 +186,41 @@ const OrderFormModal = ({ isOpen, onClose, selectedProduct }: OrderFormModalProp
 
             {/* Success State */}
             {isSuccess ? (
-              <div className="p-12 text-center">
+              <div className="p-12 text-center space-y-4">
                 <motion.div
                   initial={{ scale: 0 }}
                   animate={{ scale: 1 }}
                   transition={{ type: "spring", damping: 15 }}
                 >
-                  <CheckCircle className="w-16 h-16 text-green-500 mx-auto mb-4" />
+                  <CheckCircle className="w-16 h-16 text-primary mx-auto mb-2" />
                 </motion.div>
-                <h3 className="font-display text-xl text-foreground mb-2">
+                <h3 className="font-display text-2xl text-foreground font-light">
                   {formType === "inquiry" ? "Inquiry Sent!" : "Order Placed!"}
                 </h3>
-                <p className="text-muted-foreground">
-                  We'll contact you shortly via WhatsApp.
+                <p className="text-muted-foreground text-sm font-body max-w-xs mx-auto">
+                  We'll contact you shortly via email or phone.
                 </p>
               </div>
             ) : (
               <>
-                {/* Form Type Toggle */}
-                <div className="flex gap-2 p-4 bg-muted/20">
+                {/* Form Type Toggle (Pill Toggle) */}
+                <div className="flex gap-2 p-1.5 m-6 bg-muted/40 rounded-full border border-accent/10">
                   <button
+                    type="button"
                     onClick={() => setFormType("inquiry")}
-                    className={`flex-1 py-2 px-4 text-sm font-body tracking-wide uppercase rounded transition-all ${formType === "inquiry"
-                      ? "bg-primary text-primary-foreground"
-                      : "bg-muted/50 text-muted-foreground hover:text-foreground"
+                    className={`flex-1 py-2.5 px-4 text-xs font-ui tracking-widest uppercase rounded-full transition-all duration-300 ${formType === "inquiry"
+                      ? "bg-primary text-primary-foreground font-bold shadow-md"
+                      : "text-muted-foreground hover:text-foreground hover:bg-muted/20"
                       }`}
                   >
                     Quick Inquiry
                   </button>
                   <button
+                    type="button"
                     onClick={() => setFormType("order")}
-                    className={`flex-1 py-2 px-4 text-sm font-body tracking-wide uppercase rounded transition-all ${formType === "order"
-                      ? "bg-primary text-primary-foreground"
-                      : "bg-muted/50 text-muted-foreground hover:text-foreground"
+                    className={`flex-1 py-2.5 px-4 text-xs font-ui tracking-widest uppercase rounded-full transition-all duration-300 ${formType === "order"
+                      ? "bg-primary text-primary-foreground font-bold shadow-md"
+                      : "text-muted-foreground hover:text-foreground hover:bg-muted/20"
                       }`}
                   >
                     Full Order
@@ -387,8 +372,8 @@ const OrderFormModal = ({ isOpen, onClose, selectedProduct }: OrderFormModalProp
                     )}
                   </Button>
 
-                  <p className="text-xs text-center text-muted-foreground">
-                    We'll confirm your {formType === "inquiry" ? "inquiry" : "order"} via WhatsApp
+                  <p className="text-xs text-center text-muted-foreground font-body">
+                    We'll confirm your {formType === "inquiry" ? "inquiry" : "order"} via email or phone
                   </p>
                 </form>
               </>
