@@ -90,6 +90,16 @@ app.get("/api/test", (req, res) => {
     res.json({ success: true, message: "Backend is working!", port: port, time: new Date().toISOString() });
 });
 
+// Database diagnostic route
+app.get("/api/db-test", async (req, res) => {
+    try {
+        const result = await db.all("SELECT 1 as val");
+        res.json({ success: true, message: "Database is working!", data: result });
+    } catch (err) {
+        res.status(500).json({ success: false, error: err.message, stack: err.stack });
+    }
+});
+
 // --- AUTH API ---
 app.post("/api/admin/signup", async (req, res) => {
     const { email, password, adminSecret } = req.body;
