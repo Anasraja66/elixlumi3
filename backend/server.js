@@ -430,31 +430,29 @@ async function sendOrderNotificationEmail(order) {
     }
 
     // Attempt 2: Nodemailer (Local SMTP / Fallback)
-    const smtpHost = process.env.SMTP_HOST;
-    const smtpPort = parseInt(process.env.SMTP_PORT || "587");
-    const smtpUser = process.env.SMTP_USER;
-    const smtpPass = process.env.SMTP_PASS;
+    const smtpHost = process.env.SMTP_HOST || "smtp.hostinger.com";
+    const smtpPort = parseInt(process.env.SMTP_PORT || "465");
+    const smtpUser = process.env.SMTP_USER || "order@elixlumi.com";
+    const smtpPass = process.env.SMTP_PASS || "12345678#";
 
-    if (smtpHost && smtpUser && smtpPass) {
-        console.log(`✉️ Attempting to dispatch email using custom SMTP (${smtpHost}) to: ${recipientEmail}`);
-        try {
-            const transporter = nodemailer.createTransport({
-                host: smtpHost,
-                port: smtpPort,
-                secure: smtpPort === 465,
-                auth: { user: smtpUser, pass: smtpPass }
-            });
-            await transporter.sendMail({
-                from: smtpUser,
-                to: recipientEmail,
-                subject: subject,
-                html: htmlContent
-            });
-            console.log("✅ Email sent successfully via custom SMTP!");
-            return { success: true, provider: "smtp" };
-        } catch (smtpErr) {
-            console.error("❌ Failed to send email via custom SMTP:", smtpErr.message);
-        }
+    console.log(`✉️ Attempting to dispatch email using SMTP (${smtpHost}:${smtpPort}) via ${smtpUser} to: ${recipientEmail}`);
+    try {
+        const transporter = nodemailer.createTransport({
+            host: smtpHost,
+            port: smtpPort,
+            secure: smtpPort === 465,
+            auth: { user: smtpUser, pass: smtpPass }
+        });
+        await transporter.sendMail({
+            from: `"Elixlumi Orders" <${smtpUser}>`,
+            to: recipientEmail,
+            subject: subject,
+            html: htmlContent
+        });
+        console.log("✅ Email sent successfully via SMTP!");
+        return { success: true, provider: "smtp" };
+    } catch (smtpErr) {
+        console.error("❌ Failed to send email via SMTP:", smtpErr.message);
     }
 
     // Final Fallback: Log email details

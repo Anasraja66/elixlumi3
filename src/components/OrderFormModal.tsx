@@ -165,13 +165,13 @@ const OrderFormModal = ({ isOpen, onClose, selectedProduct }: OrderFormModalProp
             onClick={(e) => e.stopPropagation()}
           >
             {/* Header */}
-            <div className="sticky top-0 z-10 flex items-center justify-between p-6 bg-background/90 backdrop-blur-md border-b border-accent/15">
+            <div className="sticky top-0 z-10 flex items-center justify-between p-4 sm:p-6 bg-background/90 backdrop-blur-md border-b border-accent/15">
               <div>
-                <h2 className="font-display text-2xl text-foreground font-light tracking-wide">
+                <h2 className="font-display text-xl sm:text-2xl text-foreground font-light tracking-wide">
                   {formType === "inquiry" ? "Make an Inquiry" : "Place Your Order"}
                 </h2>
                 {selectedProduct && (
-                  <p className="text-xs text-primary font-ui tracking-widest uppercase mt-1">
+                  <p className="text-[10px] sm:text-xs text-primary font-ui tracking-widest uppercase mt-1">
                     {selectedProduct.name} — {selectedProduct.price}
                   </p>
                 )}
@@ -204,11 +204,11 @@ const OrderFormModal = ({ isOpen, onClose, selectedProduct }: OrderFormModalProp
             ) : (
               <>
                 {/* Form Type Toggle (Pill Toggle) */}
-                <div className="flex gap-2 p-1.5 m-6 bg-muted/40 rounded-full border border-accent/10">
+                <div className="flex gap-2 p-1.5 mx-4 my-3 sm:mx-6 sm:my-4 bg-muted/40 rounded-full border border-accent/10">
                   <button
                     type="button"
                     onClick={() => setFormType("inquiry")}
-                    className={`flex-1 py-2.5 px-4 text-xs font-ui tracking-widest uppercase rounded-full transition-all duration-300 ${formType === "inquiry"
+                    className={`flex-1 py-2 px-4 text-[10px] sm:text-xs font-ui tracking-widest uppercase rounded-full transition-all duration-300 ${formType === "inquiry"
                       ? "bg-primary text-primary-foreground font-bold shadow-md"
                       : "text-muted-foreground hover:text-foreground hover:bg-muted/20"
                       }`}
@@ -218,7 +218,7 @@ const OrderFormModal = ({ isOpen, onClose, selectedProduct }: OrderFormModalProp
                   <button
                     type="button"
                     onClick={() => setFormType("order")}
-                    className={`flex-1 py-2.5 px-4 text-xs font-ui tracking-widest uppercase rounded-full transition-all duration-300 ${formType === "order"
+                    className={`flex-1 py-2 px-4 text-[10px] sm:text-xs font-ui tracking-widest uppercase rounded-full transition-all duration-300 ${formType === "order"
                       ? "bg-primary text-primary-foreground font-bold shadow-md"
                       : "text-muted-foreground hover:text-foreground hover:bg-muted/20"
                       }`}
@@ -228,7 +228,7 @@ const OrderFormModal = ({ isOpen, onClose, selectedProduct }: OrderFormModalProp
                 </div>
 
                 {/* Form */}
-                <form onSubmit={handleSubmit} className="p-6 space-y-4">
+                <form onSubmit={handleSubmit} className="p-4 sm:p-6 space-y-4">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div className="space-y-2">
                       <Label htmlFor="name">Name *</Label>
