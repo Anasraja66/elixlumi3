@@ -534,9 +534,24 @@ app.get("/api/admin/stats", verifyToken, async (req, res) => {
 
 app.get("/api/health", (_req, res) => res.json({ ok: true, storage: "sqlite" }));
 
-app.use(express.static(distDir));
+// Serve static files with no-cache headers for index.html to force browser updates
+app.use(express.static(distDir, {
+    setHeaders: (res, filePath) => {
+        if (filePath.endsWith("index.html")) {
+            res.setHeader("Cache-Control", "no-cache, no-store, must-revalidate");
+            res.setHeader("Pragma", "no-cache");
+            res.setHeader("Expires", "0");
+        }
+    }
+}));
+
 app.get("*", (req, res, next) => {
     if (req.path.startsWith("/api/")) return next();
+    
+    // Force no-cache on the index.html fallback routing
+    res.setHeader("Cache-Control", "no-cache, no-store, must-revalidate");
+    res.setHeader("Pragma", "no-cache");
+    res.setHeader("Expires", "0");
     res.sendFile(path.join(distDir, "index.html"));
 });
 
