@@ -6,14 +6,15 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const dbPath = path.resolve(__dirname, 'database.sqlite');
 
-// Determine if we should use MySQL
-const useMySQL = !!(process.env.DB_HOST || process.env.DB_USER);
+// Automatically use MySQL on Linux/Hostinger production, and SQLite on local Windows
+const useMySQL = process.platform !== 'win32' || !!(process.env.DB_HOST || process.env.DB_USER);
 
 console.log("🗄️ Database Debug Info:");
 console.log("📂 Storage Mode:", useMySQL ? "MySQL" : "SQLite");
 if (useMySQL) {
     console.log("📂 DB Host:", process.env.DB_HOST || 'localhost');
     console.log("📂 DB Name:", process.env.DB_NAME || 'u842406445_elixlumi');
+    console.log("📂 DB User:", process.env.DB_USER || 'u842406445_elixlumi_user');
 } else {
     console.log("📂 DB Path:", dbPath);
 }
@@ -26,7 +27,7 @@ const getMySQLPool = () => {
         mysqlPool = mysql.createPool({
             host: process.env.DB_HOST || 'localhost',
             user: process.env.DB_USER || 'u842406445_elixlumi_user',
-            password: process.env.DB_PASSWORD || '',
+            password: process.env.DB_PASSWORD || 'Anasraja313@#',
             database: process.env.DB_NAME || 'u842406445_elixlumi',
             port: parseInt(process.env.DB_PORT || '3306'),
             waitForConnections: true,
