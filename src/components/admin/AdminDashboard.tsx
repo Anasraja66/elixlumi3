@@ -147,7 +147,7 @@ const AdminDashboard = ({ onNavigate }: { onNavigate: (tab: string) => void }) =
                   Order
                 </th>
                 <th className="text-left p-4 text-xs text-muted-foreground font-medium uppercase tracking-wider">
-                  Customer
+                  Customer Info
                 </th>
                 <th className="text-left p-4 text-xs text-muted-foreground font-medium uppercase tracking-wider">
                   Amount
@@ -162,7 +162,15 @@ const AdminDashboard = ({ onNavigate }: { onNavigate: (tab: string) => void }) =
                 stats.recentOrders.map((order) => (
                   <tr key={order.id} className="hover:bg-muted/10">
                     <td className="p-4 text-sm text-foreground">{order.order_number}</td>
-                    <td className="p-4 text-sm text-muted-foreground">{order.customer_name}</td>
+                    <td className="p-4">
+                      <div>
+                        <p className="text-sm text-foreground font-medium">{order.customer_name || "N/A"}</p>
+                        <p className="text-xs text-muted-foreground">{order.customer_phone}</p>
+                        {order.customer_email && (
+                          <p className="text-xs text-muted-foreground">{order.customer_email}</p>
+                        )}
+                      </div>
+                    </td>
                     <td className="p-4 text-sm text-foreground">
                       PKR {order.total_amount?.toLocaleString()}
                     </td>

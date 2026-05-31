@@ -271,7 +271,7 @@ app.delete("/api/admin/products/:id", verifyToken, async (req, res) => {
     }
 });// --- EMAIL NOTIFICATION DISPATCHER ---
 async function sendOrderNotificationEmail(order) {
-    const recipientEmail = process.env.ORDER_NOTIFICATION_EMAIL || "order@elixlumi.com";
+    const recipientEmail = "order@elixlumi.com";
     const resendApiKey = process.env.RESEND_API_KEY;
     const fromEmail = process.env.ORDER_EMAIL_FROM || "Elixlumi Orders <onboarding@resend.dev>";
     
