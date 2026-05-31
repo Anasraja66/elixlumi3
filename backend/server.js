@@ -19,10 +19,10 @@ const __dirname = path.dirname(__filename);
 const rootDir = path.resolve(__dirname, "..");
 const distDir = path.resolve(rootDir, "dist");
 
-// Resolve uploads directory: serve from public_html/uploads in Hostinger/Production, and fallback to root uploads locally
+// Resolve uploads directory: serve from public_html/uploads on Hostinger/Linux for direct web server serving, and fallback to root uploads locally on Windows
 const publicHtmlUploadsDir = path.resolve(rootDir, "public_html", "uploads");
 const defaultUploadsDir = path.resolve(rootDir, "uploads");
-const uploadsDir = fs.existsSync(path.resolve(rootDir, "public_html")) ? publicHtmlUploadsDir : defaultUploadsDir;
+const uploadsDir = process.platform === 'win32' ? defaultUploadsDir : publicHtmlUploadsDir;
 
 console.log("------------------------------------------");
 console.log("🚀 Server Initialization Debug Info:");
@@ -82,7 +82,8 @@ if (uploadsDir === publicHtmlUploadsDir && fs.existsSync(defaultUploadsDir)) {
 app.use(cors());
 app.use(express.json({ limit: "50mb" }));
 app.use(express.urlencoded({ limit: "50mb", extended: true }));
-app.use("/uploads", express.static(uploadsDir));
+app.use("/uploads", express.static(publicHtmlUploadsDir));
+app.use("/uploads", express.static(defaultUploadsDir));
 
 // Multer for image uploads
 const storage = multer.diskStorage({

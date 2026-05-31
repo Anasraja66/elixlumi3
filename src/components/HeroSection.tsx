@@ -30,7 +30,7 @@ const HeroSection = () => {
   return (
     <section
       ref={containerRef}
-      className="relative min-h-screen lg:h-screen w-full flex items-center pt-20 lg:pt-28 pb-12 overflow-hidden bg-background transition-colors duration-500"
+      className="relative h-screen w-full flex items-center overflow-hidden bg-background transition-colors duration-500"
     >
       {/* Background Image Parallax */}
       <motion.div 
@@ -62,14 +62,14 @@ const HeroSection = () => {
       </motion.div>
 
       {/* Main Content Overlay */}
-      <div className="container mx-auto px-8 lg:px-24 z-10 pt-16 lg:pt-24">
+      <div className="container mx-auto px-8 lg:px-24 z-10 pt-8 lg:pt-12">
         <div className="max-w-2xl lg:max-w-4xl">
           {/* Top tagline - Bold UI */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 1, delay: 0.5 }}
-            className="flex items-center gap-6 mb-12"
+            className="flex items-center gap-6 mb-6 lg:mb-8"
           >
             <span className="w-12 h-[2px] bg-primary" />
             <span className="font-ui text-[10px] tracking-[0.8em] text-foreground font-extrabold uppercase">
@@ -82,9 +82,9 @@ const HeroSection = () => {
             initial={{ opacity: 0, y: 40 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 1.5, ease: [0.22, 1, 0.36, 1], delay: 0.8 }}
-            className="mb-16"
+            className="mb-8 lg:mb-12"
           >
-            <h1 className="font-display text-[12vw] md:text-8xl lg:text-[10rem] leading-[0.85] font-light text-foreground tracking-tighter">
+            <h1 className="font-display text-[12vw] md:text-8xl lg:text-[7.5rem] leading-[0.85] font-light text-foreground tracking-tighter">
               Your <span className={`italic font-normal ${isDark ? "text-accent" : "serif-detail"}`}>best</span> <br /> 
               scent secret
             </h1>
