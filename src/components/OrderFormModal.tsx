@@ -62,7 +62,7 @@ const OrderFormModal = ({ isOpen, onClose, selectedProduct }: OrderFormModalProp
     if (!formData.name.trim() || !formData.phone.trim()) {
       toast({
         title: "Error",
-        description: "Please fill in your name and phone number.",
+        description: "Please fill all the form.",
         variant: "destructive",
       });
       return;
@@ -138,7 +138,7 @@ const OrderFormModal = ({ isOpen, onClose, selectedProduct }: OrderFormModalProp
       console.error("Order submission error:", error);
       toast({
         title: "Error",
-        description: "Failed to submit order. Please try again or contact us on WhatsApp.",
+        description: "Please fill all the form.",
         variant: "destructive",
       });
     } finally {

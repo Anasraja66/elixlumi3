@@ -30,7 +30,7 @@ const HeroSection = () => {
   return (
     <section
       ref={containerRef}
-      className="relative h-screen w-full flex items-center overflow-hidden bg-background transition-colors duration-500"
+      className="relative min-h-screen lg:h-screen w-full flex items-center pt-20 lg:pt-28 pb-12 overflow-hidden bg-background transition-colors duration-500"
     >
       {/* Background Image Parallax */}
       <motion.div 
@@ -62,7 +62,7 @@ const HeroSection = () => {
       </motion.div>
 
       {/* Main Content Overlay */}
-      <div className="container mx-auto px-8 lg:px-24 z-10">
+      <div className="container mx-auto px-8 lg:px-24 z-10 pt-16 lg:pt-24">
         <div className="max-w-2xl lg:max-w-4xl">
           {/* Top tagline - Bold UI */}
           <motion.div

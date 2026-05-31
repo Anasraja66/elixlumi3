@@ -55,10 +55,17 @@ const Footer = () => {
           {/* Copyright */}
           <div className="text-center space-y-2">
             <p className="font-body text-xs text-muted-foreground">
-              © 2024 ELIX LUMI. All rights reserved.
+              © 2026 ELIX LUMI. All rights reserved.
             </p>
             <p className="font-body text-xs text-muted-foreground/60">
-              Crafted with passion. Worn with intention.
+              <a 
+                href="https://anastechnology.tech" 
+                target="_blank" 
+                rel="noopener noreferrer" 
+                className="text-accent hover:text-accent/80 hover:underline transition-all duration-300 font-medium"
+              >
+                reserved@2026anastechnology.tech
+              </a>
             </p>
           </div>
         </div>
