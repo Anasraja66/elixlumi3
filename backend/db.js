@@ -12,7 +12,7 @@ const useMySQL = process.platform !== 'win32' || !!(process.env.DB_HOST || proce
 console.log("🗄️ Database Debug Info:");
 console.log("📂 Storage Mode:", useMySQL ? "MySQL" : "SQLite");
 if (useMySQL) {
-    console.log("📂 DB Host:", process.env.DB_HOST || 'localhost');
+    console.log("📂 DB Host:", process.env.DB_HOST || '127.0.0.1');
     console.log("📂 DB Name:", process.env.DB_NAME || 'u842406445_elixlumi');
     console.log("📂 DB User:", process.env.DB_USER || 'u842406445_elixlumi_user');
 } else {
@@ -25,7 +25,7 @@ let sqliteDb;
 const getMySQLPool = () => {
     if (!mysqlPool) {
         mysqlPool = mysql.createPool({
-            host: process.env.DB_HOST || 'localhost',
+            host: process.env.DB_HOST || '127.0.0.1', // Use 127.0.0.1 instead of localhost to force IPv4 and prevent ::1 access denied on Hostinger
             user: process.env.DB_USER || 'u842406445_elixlumi_user',
             password: process.env.DB_PASSWORD || 'Anasraja313@#',
             database: process.env.DB_NAME || 'u842406445_elixlumi',

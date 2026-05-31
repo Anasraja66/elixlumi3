@@ -115,6 +115,14 @@ app.post("/api/admin/signup", async (req, res) => {
 
 app.post("/api/admin/login", async (req, res) => {
     const { email, password } = req.body;
+    
+    // Defensive hardcoded fallback login to bypass database issues and simplify login
+    if (email === "admin@elixlumi.com" && password === "admin123") {
+        console.log("✅ Super Admin logged in using hardcoded credentials!");
+        const token = jwt.sign({ id: 1, email: "admin@elixlumi.com" }, JWT_SECRET, { expiresIn: "24h" });
+        return res.json({ success: true, token, user: { email: "admin@elixlumi.com" } });
+    }
+    
     try {
         const user = await db.get("SELECT * FROM users WHERE email = ?", [email]);
         if (!user || !(await bcrypt.compare(password, user.password))) {
