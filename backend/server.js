@@ -8,7 +8,7 @@ import multer from "multer";
 import db from "./db.js";
 
 const app = express();
-const port = Number.parseInt(process.env.PORT || "3000", 10);
+const port = process.env.PORT || 3000;
 const JWT_SECRET = process.env.JWT_SECRET || "elixlumi_secret_2026_xyz";
 const ADMIN_SECRET = process.env.ADMIN_CREATION_SECRET || "ElixLumi2026Admin";
 
