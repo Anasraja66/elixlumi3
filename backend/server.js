@@ -116,6 +116,27 @@ app.get("/api/test", (req, res) => {
     res.json({ success: true, message: "Backend is working!", port: port, time: new Date().toISOString() });
 });
 
+// Diagnostic route to list uploaded files
+app.get("/api/debug-files", (req, res) => {
+    try {
+        const files = fs.existsSync(uploadsDir) ? fs.readdirSync(uploadsDir) : [];
+        const oldFiles = fs.existsSync(defaultUploadsDir) ? fs.readdirSync(defaultUploadsDir) : [];
+        res.json({
+            success: true,
+            uploadsDir,
+            uploadsDirExists: fs.existsSync(uploadsDir),
+            defaultUploadsDir,
+            defaultUploadsDirExists: fs.existsSync(defaultUploadsDir),
+            files,
+            oldFiles,
+            platform: process.platform,
+            time: new Date().toISOString()
+        });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
 // Database diagnostic route
 app.get("/api/db-test", async (req, res) => {
     try {
