@@ -1,5 +1,4 @@
 import mysql from 'mysql2/promise';
-import sqlite3 from 'sqlite3';
 import path from 'path';
 import { fileURLToPath } from 'url';
 
@@ -39,8 +38,11 @@ const getMySQLPool = () => {
     return mysqlPool;
 };
 
-const getSQLiteDb = () => {
+const getSQLiteDb = async () => {
     if (!sqliteDb) {
+        // Dynamically import sqlite3 ONLY when needed to avoid compilation/runtime crashes on Hostinger production
+        const sqlite3Module = await import('sqlite3');
+        const sqlite3 = sqlite3Module.default;
         sqliteDb = new sqlite3.Database(dbPath, (err) => {
             if (err) {
                 console.error("❌ Failed to connect to SQLite database:", err.message);
@@ -114,7 +116,7 @@ const initDb = async () => {
             connection.release();
         }
     } else {
-        const db = getSQLiteDb();
+        const db = await getSQLiteDb();
         return new Promise((resolve, reject) => {
             db.serialize(() => {
                 db.run(`CREATE TABLE IF NOT EXISTS users (
@@ -183,7 +185,7 @@ const run = async (sql, params = []) => {
         const [result] = await getMySQLPool().execute(sql, params);
         return { id: result.insertId, changes: result.affectedRows };
     } else {
-        const db = getSQLiteDb();
+        const db = await getSQLiteDb();
         return new Promise((resolve, reject) => {
             db.run(sql, params, function (err) {
                 if (err) reject(err);
@@ -198,7 +200,7 @@ const all = async (sql, params = []) => {
         const [rows] = await getMySQLPool().execute(sql, params);
         return rows;
     } else {
-        const db = getSQLiteDb();
+        const db = await getSQLiteDb();
         return new Promise((resolve, reject) => {
             db.all(sql, params, (err, rows) => {
                 if (err) reject(err);
@@ -213,7 +215,7 @@ const get = async (sql, params = []) => {
         const [rows] = await getMySQLPool().execute(sql, params);
         return rows[0] || null;
     } else {
-        const db = getSQLiteDb();
+        const db = await getSQLiteDb();
         return new Promise((resolve, reject) => {
             db.get(sql, params, (err, row) => {
                 if (err) reject(err);
